@@ -20,29 +20,29 @@ $rs = New-PSSession -ComputerName $computername -Credential $credential
 
 # Check that a static IP address has been configured before installing DHCP Server
 #
-$interface = Invoke-Command -Session $rs -ScriptBlock { (Get-NetAdapter | ? {$_.Status -eq "up"}) | Get-NetIPInterface -AddressFamily IPv4 }
+$interface = Invoke-Command -Session $rs -ScriptBlock { (Get-NetAdapter | Where-Object {$_.Status -eq "up"}) | Get-NetIPInterface -AddressFamily IPv4 }
 If ($interface.Dhcp -eq "Enabled") {
-    write-host "DHCP enabled. This should be static before installing DHCP"
+    write-host "`nDHCP is enabled on this system. This should be static before installing DHCP: "
     Write-Host ($interface | Format-Table | Out-String)
     exit
 }
 
 #Roles and Features section
-foreach ( $RA in $RolesAndFeatures ) {
+foreach ( $feature in $RolesAndFeatures ) {
     # Check status of role/feature
-    $check = Invoke-Command -Session $rs -ScriptBlock { Get-WindowsFeature -name $using:RA }
+    $check = Invoke-Command -Session $rs -ScriptBlock { Get-WindowsFeature -name $using:feature }
     Write-Host ($check | Format-Table | Out-String)
 
     # If role/feature is not installed, then install
     if ($check.InstallState -notmatch 'Installed') {
-        $install = Invoke-Command -Session $rs -ScriptBlock { Install-WindowsFeature -Name $using:RA }
+        $install = Invoke-Command -Session $rs -ScriptBlock { Install-WindowsFeature -Name $using:feature }
         Write-host ($install | Format-Table | Out-String)
     }
 }
 
 # reboot host
 #
-Restart-Computer -ComputerName $computername -Credential $credential
+Restart-Computer -ComputerName $computername -Credential $credential -Force
 
 # Close PSSession - is this needed??
 Remove-PSSession $rs
