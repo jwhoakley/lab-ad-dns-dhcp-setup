@@ -3,6 +3,8 @@
 #
 # https://social.technet.microsoft.com/Forums/lync/en-US/ba61d5c7-f3f5-4280-91a4-0c2cfb5bd8fe/invokecommand-and-getwindowsfeatures?forum=winserverpowershell
 #
+# NOTE: If the remote PS host is outside of the target host's subnet the default FW policy will block WINRM access
+#       It will be necessary to run a local PS command to relax the firewall rule a little: Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
 
 # Fixed variables
 $RolesAndFeatures = @('DNS','DHCP','AD-Domain-Services')
