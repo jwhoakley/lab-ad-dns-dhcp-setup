@@ -1,63 +1,68 @@
 # Connect to new remote host running WS2019 Core and
 # Install 'DNS', 'DHCP' and 'AD-Domain-Services' and all dependencies
 #
-$computername="10.16.51.25"
-$credential = Get-Credential
+# https://cloudblogs.microsoft.com/industry-blog/en-gb/technetuk/2016/06/08/setting-up-active-directory-via-powershell
+# https://www.thegeekstuff.com/2014/12/install-windows-ad/
+#
+
+# Fixed variables
 $RolesAndFeatures = @('DNS','AD-Domain-Services')
+
+# Get variables from file
+# install-conf.txt file format:
+#   computername = <ip address>
+#   domain = <string>
+#   netbiosname = <string>
+$var = get-content .\config-conf.txt | Out-String | ConvertFrom-StringData
+$computername = $var.computername
+$domain = $var.domain
+$netbiosname = $var.netbiosname
+$safemodepswd = $var.safemodesecpswd | ConvertTo-SecureString -Key (1..16)
+
+# User input variables
+$credential = Get-Credential
 
 # Open PSSession
 $rs = New-PSSession -ComputerName $computername -Credential $credential
 
 # Check that DNS and ADDS are installed 
-foreach ( $RA in $RolesAndFeatures ) {
-    $check = Invoke-Command -Session $rs -ScriptBlock { Get-WindowsFeature -name $using:RA }
+foreach ( $feature in $RolesAndFeatures ) {
+    $check = Invoke-Command -Session $rs -ScriptBlock { Get-WindowsFeature -name $using:feature }
     if ($check.InstallState -notmatch 'Installed') {
+        Write-Host "`n$feature is NOT currently installed. Run install script first."
         Write-host ($install | Format-Table | Out-String)
         exit
     }
 }
 
+# WARNING: A delegation for this DNS server cannot be created because the authoritative parent zone cannot be found or it does not run Windows DNS server. If you are integrating with an existing DNS infrastructure, 
+# you should manually create a delegation to this DNS server in the parent zone to ensure reliable name resolution from outside the domain "mylab.local". Otherwise, no action is required.
+#
+
 # Configure AD
-# Import-Module ADDSDeployment
-
-VM: 10.16.51.25
-default password for Administrator
-
-
-New-NetFirewallRule -DisplayName "Allow inbound ICMPv4" -Direction Inbound -Protocol ICMPv4 -IcmpType 8 -RemoteAddress <localsubnet> -Action Allow
-
-New-NetFirewallRule -DisplayName "Allow inbound ICMPv6" -Direction Inbound -Protocol ICMPv6 -IcmpType 8 -RemoteAddress 10.16.48.0/22 -Action Allow
-
-Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
-
-get-netfirewallrule -enabled true -direction inbound | more
-
-
-
-https://www.thegeekstuff.com/2014/12/install-windows-ad/
-
-Install-windowsfeature AD-domain-services
-
-Import-Module ADDSDeployment
-
-Install-ADDSForest
- -CreateDnsDelegation:$false `
- -DatabasePath "C:\Windows\NTDS" `
- -DomainMode "WinThreshold" `
- -DomainName "citrixlab.local" `
- -DomainNetbiosName "CITRIXLAB" `
- -ForestMode "WinThreshold" `
- -InstallDns:$true `
- -LogPath "C:\Windows\NTDS" `
- -NoRebootOnCompletion:$false `
- -SysvolPath "C:\Windows\SYSVOL" `
- -Force:$true
-
+# command is not passing variables through to remote session
+Invoke-Command -Session $rs -ScriptBlock { Import-Module ADDSDeployment }
+$configure = Invoke-Command -Session $rs -ScriptBlock { 
+    Install-ADDSForest `
+        -SafeModeAdministratorPassword $safemodepswd `
+        -CreateDnsDelegation:$false `
+        -DatabasePath "C:\Windows\NTDS" `
+        -DomainMode "WinThreshold" `
+        -DomainName $using:domain `
+        -DomainNetbiosName $using:netbiosname `
+        -ForestMode "WinThreshold" `
+        -InstallDns:$true `
+        -LogPath "C:\Windows\NTDS" `
+        -NoRebootOnCompletion:$false `
+        -SysvolPath "C:\Windows\SYSVOL" `
+        -Force:$true
+}
+write-host ($configure | Format-Table | Out-String)
 
 # Configure reverse lookup zone
 
 # reboot host
-#
+#  - is this needed?
 
 # Close PSSession
 Remove-PSSession $rs
