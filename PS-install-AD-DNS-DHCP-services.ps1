@@ -4,13 +4,14 @@
 # https://social.technet.microsoft.com/Forums/lync/en-US/ba61d5c7-f3f5-4280-91a4-0c2cfb5bd8fe/invokecommand-and-getwindowsfeatures?forum=winserverpowershell
 #
 
+# Fixed variables
+$RolesAndFeatures = @('DNS','DHCP','AD-Domain-Services')
+
 # Get variables from file
 # install-conf.txt file format:
-#   computername = '<ip address>'
-#   RolesAndFeatures = @('<svc-name>','<svc-name>')
+#   computername = <ip address>
 $var = get-content .\install-conf.txt | Out-String | ConvertFrom-StringData
 $computername = $var.computername
-$RolesAndFeatures = $var.RolesAndFeatures
 
 # User input variables
 $credential = Get-Credential
