@@ -1,0 +1,63 @@
+$Features = @{}
+$Features += @{ $RA = 'Not Installed' }
+write-host -ForegroundColor Red ($Features | Format-Table | Out-String)
+
+
+#Enter-PSSession -ComputerName $computername -Credential $credential
+#Exit-PSSession
+
+
+## find installed features
+get-WindowsFeature | ?{$_.InstallState -match 'Installed'}
+
+# Tests for open PSSession
+# Invoke-Command -Session $rs -ScriptBlock { [System.Net.Dns]::GetHostName() }
+
+# Read whether the desired roles/features are already enabled
+#    import-module ServerManager
+#    Install-WindowsFeature -Name <feature_name> -computerName <computer_name> -Restart
+write-host "Opening session to remote host $computername"
+
+
+$IPType = "IPv4"
+$adapter = Get-NetAdapter | ? {$_.Status -eq "up"}
+$interface = $adapter | Get-NetIPInterface -AddressFamily $IPType
+If ($interface.Dhcp -eq "Enabled") {
+
+
+New-NetFirewallRule -DisplayName "Allow inbound ICMPv4" -Direction Inbound -Protocol ICMPv4 -IcmpType 8 -RemoteAddress <localsubnet> -Action Allow
+
+New-NetFirewallRule -DisplayName "Allow inbound ICMPv6" -Direction Inbound -Protocol ICMPv6 -IcmpType 8 -RemoteAddress 10.16.48.0/22 -Action Allow
+
+Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
+
+get-netfirewallrule -enabled true -direction inbound | more
+
+
+
+
+# How to create secure string for confgi-conf.txt input file
+#   $Secure = Read-Host -AsSecureString
+#   $Encrypted = ConvertFrom-SecureString -SecureString $Secure -Key (1..16)
+#   $Encrypted | Set-Content Encrypted.txt
+#   $Secure2 = Get-Content Encrypted.txt | ConvertTo-SecureString -Key (1..16)
+
+
+
+
+Credentials to file:
+
+$credential = get-credential
+$pwd = convertfrom-securestring $credential.password
+$user = $credential.username
+$string = "$user `n$pwd
+$string | out-file ".\creds.txt"
+
+
+Credentials from file:
+
+$array = @(get-content .\creds.txt)
+$username = $array[0]
+$password = convertto-securestring $array[1]
+$creds = new-object System.Management.Automation.Pscredential -argumentlist $username, $password
+
