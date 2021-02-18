@@ -24,6 +24,11 @@ $adapter = Get-NetAdapter | ? {$_.Status -eq "up"}
 $interface = $adapter | Get-NetIPInterface -AddressFamily $IPType
 If ($interface.Dhcp -eq "Enabled") {
 
+# change IP address
+Get-NetIPConfiguration
+New-NetIPAddress -InterfaceIndex 12 -IPAddress 192.168.0.1
+Set-NetIPAddress -InterfaceIndex 12 -IPAddress 192.168.0.1 -PrefixLength 24
+Set-DNSClientServerAddress –interfaceIndex 12 –ServerAddresses (“10.0.0.1”,”10.0.0.2”)
 
 New-NetFirewallRule -DisplayName "Allow inbound ICMPv4" -Direction Inbound -Protocol ICMPv4 -IcmpType 8 -RemoteAddress <localsubnet> -Action Allow
 
@@ -33,7 +38,9 @@ Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
 
 get-netfirewallrule -enabled true -direction inbound | more
 
-
+# Enable PSremote
+enable-psremoting
+winrm quickconfig
 
 
 # How to create secure string for confgi-conf.txt input file
