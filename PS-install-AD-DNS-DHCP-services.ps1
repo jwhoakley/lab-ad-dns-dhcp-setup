@@ -45,7 +45,7 @@ foreach ( $feature in $RolesAndFeatures ) {
 
 # reboot host
 #
-Restart-Computer -ComputerName $computername -Credential $credential -Force
+# Restart-Computer -ComputerName $computername -Credential $credential -Force
 
 # Close PSSession - is this needed??
 Remove-PSSession $rs

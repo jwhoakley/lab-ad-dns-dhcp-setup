@@ -61,3 +61,26 @@ $username = $array[0]
 $password = convertto-securestring $array[1]
 $creds = new-object System.Management.Automation.Pscredential -argumentlist $username, $password
 
+
+## Hyper-V relevant PS code
+
+# set static ip for host
+new-NetIPAddress xxxx
+
+# https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/user-guide/setup-nat-network
+# https://petri.com/using-nat-virtual-switch-hyper-v
+# configure Windows 10 Hyper-V virtual switch for inbound NAT
+New-VMSwitch -SwitchName "NATswitch" -SwitchType Internal
+New-NetIPAddress -IPAddress 192.168.0.1 -PrefixLength 24 -InterfaceAlias “vEthernet (NATswitch)”
+New-NetNAT -Name “NATnetwork” -InternalIPInterfaceAddressPrefix 192.168.0.0/24
+
+# https://petri.com/configuring-vm-networking-hyper-v-nat-switch
+# Push IPv4 config to VM from Hyper-V host
+Get-VMNetworkAdapter -VMName WS2019-core-1 -Name "Network Adapter" | Set-VMNetworkConfiguration -IPAddress 192.168.0.10 -Subnet 255.255.255.0 -DNSServer 192.168.1.250 -DefaultGateway 192.168.0.1
+
+# https://petri.com/create-nat-rules-hyper-v-nat-virtual-switch 
+Add-NetNatStaticMapping -ExternalIPAddress "0.0.0.0/24" -ExternalPort 80 -Protocol TCP -InternalIPAddress "192.168.0.?" -InternalPort 80 -NatName NATnetwork
+# optional....
+Add-NetNatStaticMapping -ExternalIPAddress "0.0.0.0/24" -ExternalPort 50002 -Protocol TCP -InternalIPAddress "192.168.0.2" -InternalPort 3389 -NatName NATNetwork
+Add-NetNatStaticMapping -ExternalIPAddress "0.0.0.0/24" -ExternalPort 50003 -Protocol TCP -InternalIPAddress "192.168.0.3" -InternalPort 3389 -NatName NATNetwork
+Add-NetNatStaticMapping -ExternalIPAddress "0.0.0.0/24" -ExternalPort 50004 -Protocol TCP -InternalIPAddress "192.168.0.4" -InternalPort 3389 -NatName NATNetwork
