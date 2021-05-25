@@ -1,9 +1,6 @@
 # Connect to new remote host running WS2019 Core and
 # Install 'DNS', 'DHCP' and 'AD-Domain-Services' and all dependencies
 #
-# https://cloudblogs.microsoft.com/industry-blog/en-gb/technetuk/2016/06/08/setting-up-active-directory-via-powershell
-# https://www.thegeekstuff.com/2014/12/install-windows-ad/
-#
 
 # Fixed variables
 $RolesAndFeatures = 'DNS', 'DHCP', 'AD-Domain-Services'
