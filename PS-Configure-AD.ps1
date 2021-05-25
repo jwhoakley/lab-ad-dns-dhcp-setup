@@ -62,9 +62,5 @@ write-host ($configure | Format-Table | Out-String)
 
 # Configure reverse lookup zone
 
-# reboot host
-#  - is this needed?
-#Restart-Computer -ComputerName $computername -Credential $credential -Force
-
 # Close PSSession
 Remove-PSSession $rs
