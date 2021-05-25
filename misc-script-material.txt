@@ -74,8 +74,6 @@ get-WindowsFeature | ?{$_.InstallState -match 'Installed'}
 write-host "Opening session to remote host $computername"
 
 
-<<<<<<< HEAD
-=======
 $IPType = "IPv4"
 $adapter = Get-NetAdapter | ? {$_.Status -eq "up"}
 $interface = $adapter | Get-NetIPInterface -AddressFamily $IPType
@@ -99,7 +97,6 @@ get-netfirewallrule -enabled true -direction inbound | more
 enable-psremoting
 winrm quickconfig
 
->>>>>>> a473f43c2d79ad05bfb9859896a7512082be4fed
 
 # How to create secure string for confgi-conf.txt input file
 #   $Secure = Read-Host -AsSecureString
