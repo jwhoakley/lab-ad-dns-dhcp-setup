@@ -74,6 +74,32 @@ get-WindowsFeature | ?{$_.InstallState -match 'Installed'}
 write-host "Opening session to remote host $computername"
 
 
+<<<<<<< HEAD
+=======
+$IPType = "IPv4"
+$adapter = Get-NetAdapter | ? {$_.Status -eq "up"}
+$interface = $adapter | Get-NetIPInterface -AddressFamily $IPType
+If ($interface.Dhcp -eq "Enabled") {
+
+# change IP address
+Get-NetIPConfiguration
+New-NetIPAddress -InterfaceIndex 12 -IPAddress 192.168.0.1
+Set-NetIPAddress -InterfaceIndex 12 -IPAddress 192.168.0.1 -PrefixLength 24
+Set-DNSClientServerAddress –interfaceIndex 12 –ServerAddresses (“10.0.0.1”,”10.0.0.2”)
+
+New-NetFirewallRule -DisplayName "Allow inbound ICMPv4" -Direction Inbound -Protocol ICMPv4 -IcmpType 8 -RemoteAddress <localsubnet> -Action Allow
+
+New-NetFirewallRule -DisplayName "Allow inbound ICMPv6" -Direction Inbound -Protocol ICMPv6 -IcmpType 8 -RemoteAddress 10.16.48.0/22 -Action Allow
+
+Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
+
+get-netfirewallrule -enabled true -direction inbound | more
+
+# Enable PSremote
+enable-psremoting
+winrm quickconfig
+
+>>>>>>> a473f43c2d79ad05bfb9859896a7512082be4fed
 
 # How to create secure string for confgi-conf.txt input file
 #   $Secure = Read-Host -AsSecureString
