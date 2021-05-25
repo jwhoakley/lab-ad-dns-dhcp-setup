@@ -17,7 +17,8 @@ $var = get-content .\config-conf.txt | Out-String | ConvertFrom-StringData
 $computername = $var.computername
 $domain = $var.domain
 $netbiosname = $var.netbiosname
-$safemodepswd = $var.safemodesecpswd | ConvertTo-SecureString -Key (1..16)
+$password = $var.password
+$safemodepswd = (ConvertTo-SecureString -String $password -AsPlainText -Force)
 
 # User input variables
 $credential = Get-Credential
