@@ -1,21 +1,16 @@
 # Connect to new remote host running WS2019 Core and
 # Install 'DNS', 'DHCP' and 'AD-Domain-Services' and all dependencies
 #
-# https://social.technet.microsoft.com/Forums/lync/en-US/ba61d5c7-f3f5-4280-91a4-0c2cfb5bd8fe/invokecommand-and-getwindowsfeatures?forum=winserverpowershell
-#
-# NOTE: If the remote PS host is outside of the target host's subnet the default FW policy will block WINRM access
-#       It will be necessary to run a local PS command to relax the firewall rule a little: Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
-
-# Fixed variables
-$RolesAndFeatures = 'DNS', 'DHCP', 'AD-Domain-Services'
 
 # Get variables from file
 # install-conf.txt file format:
 #   computername = <ip address>
-#$var = get-content .\install-conf.txt | Out-String | ConvertFrom-StringData
-#$computername = $var.computername
-$computername = Read-Host "Target host IP address: "
-# User input variables
+#   features = <comma separated list>
+$var = get-content .\install-conf.txt | Out-String | ConvertFrom-StringData
+$computername = $var.computername
+$hostname = $var.hostname
+$RolesAndFeatures = 'DNS', 'DHCP', 'AD-Domain-Services'
+# User input for access credentials
 $credential = Get-Credential
 
 # Open PSSession
@@ -44,9 +39,9 @@ foreach ( $feature in $RolesAndFeatures ) {
     }
 }
 
-# reboot host
-#
-Restart-Computer -ComputerName $computername -Credential $credential -Force
 
-# Close PSSession - is this needed??
-#Remove-PSSession $rs
+# Set Target node hostname
+Rename-Computer -NewName $hostname
+
+# reboot host
+Restart-Computer -ComputerName $computername -Credential $credential -Force
