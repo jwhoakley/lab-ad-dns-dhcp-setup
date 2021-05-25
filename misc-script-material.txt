@@ -2,14 +2,16 @@
 # Set TrustedHosts on client host with Admin privs
 set-item WSMan:\localhost\client\trustedhosts -Value *
 get-item WSMan:\localhost\client\trustedhosts
+
 # Set Target host to allow PSRemoting
 Enable-PSRemoting -Force -SkipNetworkProfileCheck
+
 # Allow WINRM through host firewall rule "WINRM-HTTP-In-TCP-PUBLIC" on Target host
 # default is LocalSubnet for the RemoteAddress
 Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
+
 # Allow ICMP to Target host from anywhere
 New-NetFirewallRule -DisplayName "Allow Any inbound ICMPv4" -Direction Inbound -Protocol ICMPv4 -IcmpType 8 -RemoteAddress Any -Action Allow
-
 
 #------------------------------------------------------
 $IPType = "IPv4"
@@ -24,6 +26,31 @@ Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
 get-netfirewallrule -enabled true -direction inbound | more
 #------------------------------------------------------
 
+####### Networking
+
+$IP = "10.10.10.10"
+$MaskBits = 24 # This means subnet mask = 255.255.255.0
+$Gateway = "10.10.10.1"
+$Dns = "10.10.10.100"
+$IPType = "IPv4"
+# Retrieve the network adapter that you want to configure
+$adapter = Get-NetAdapter | ? {$_.Status -eq "up"}
+# Remove any existing IP, gateway from our ipv4 adapter
+If (($adapter | Get-NetIPConfiguration).IPv4Address.IPAddress) {
+ $adapter | Remove-NetIPAddress -AddressFamily $IPType -Confirm:$false
+}
+If (($adapter | Get-NetIPConfiguration).Ipv4DefaultGateway) {
+ $adapter | Remove-NetRoute -AddressFamily $IPType -Confirm:$false
+}
+ # Configure the IP address and default gateway
+$adapter | New-NetIPAddress `
+ -AddressFamily $IPType `
+ -IPAddress $IP `
+ -PrefixLength $MaskBits `
+ -DefaultGateway $Gateway
+# Configure the DNS client server IP addresses
+$adapter | Set-DnsClientServerAddress -ServerAddresses $DNS
+ #------------------------------------------------------
 
 
 $Features = @{}
