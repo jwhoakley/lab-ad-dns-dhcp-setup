@@ -45,7 +45,7 @@ foreach ( $feature in $RolesAndFeatures ) {
 Invoke-Command -Session $rs -ScriptBlock { Import-Module ADDSDeployment }
 $configure = Invoke-Command -Session $rs -ScriptBlock { 
     Install-ADDSForest `
-        -SafeModeAdministratorPassword $safemodepswd `
+        -SafeModeAdministratorPassword $using:safemodepswd `
         -CreateDnsDelegation:$false `
         -DatabasePath "C:\Windows\NTDS" `
         -DomainMode "WinThreshold" `
