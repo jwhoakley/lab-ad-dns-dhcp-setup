@@ -6,7 +6,7 @@
 #
 
 # Fixed variables
-$RolesAndFeatures = @('DNS','AD-Domain-Services')
+$RolesAndFeatures = 'DNS', 'DHCP', 'AD-Domain-Services'
 
 # Get variables from file
 # install-conf.txt file format:
@@ -63,6 +63,7 @@ write-host ($configure | Format-Table | Out-String)
 
 # reboot host
 #  - is this needed?
+#Restart-Computer -ComputerName $computername -Credential $credential -Force
 
 # Close PSSession
 Remove-PSSession $rs
