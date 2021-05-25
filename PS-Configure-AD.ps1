@@ -13,14 +13,21 @@ $RolesAndFeatures = 'DNS', 'DHCP', 'AD-Domain-Services'
 #   computername = <ip address>
 #   domain = <string>
 #   netbiosname = <string>
+#   password = <string>
 $var = get-content .\config-conf.txt | Out-String | ConvertFrom-StringData
 $computername = $var.computername
-$domain = $var.domain
-$netbiosname = $var.netbiosname
-$password = $var.password
-$safemodepswd = (ConvertTo-SecureString -String $password -AsPlainText -Force)
+$safemodepswd = (ConvertTo-SecureString -String $var.password -AsPlainText -Force)
+$DomainName = $var.domain
+$NetbiosName = $var.netbiosname
+#Declare standard variables
+$DatabasePath = "c:\windows\NTDS"
+$DomainMode = "WinThreshold"
+$ForestMode = "WinThreshold"
+$LogPath = "c:\windows\NTDS"
+$SysVolPath = "c:\windows\SYSVOL"
+$featureLogPath = "c:\poshlog\featurelog.txt" 
 
-# User input variables
+# User input variables for login to remote Target host
 $credential = Get-Credential
 
 # Open PSSession
@@ -47,15 +54,15 @@ $configure = Invoke-Command -Session $rs -ScriptBlock {
     Install-ADDSForest `
         -SafeModeAdministratorPassword $using:safemodepswd `
         -CreateDnsDelegation:$false `
-        -DatabasePath "C:\Windows\NTDS" `
-        -DomainMode "WinThreshold" `
-        -DomainName $using:domain `
-        -DomainNetbiosName $using:netbiosname `
-        -ForestMode "WinThreshold" `
+        -DatabasePath $using:DatabasePath `
+        -DomainMode $using:DomainMode `
+        -DomainName $using:DomainName `
+        -DomainNetbiosName $using:NetbiosName `
+        -ForestMode $using:ForestMode `
         -InstallDns:$true `
-        -LogPath "C:\Windows\NTDS" `
+        -LogPath $using:LogPath `
         -NoRebootOnCompletion:$false `
-        -SysvolPath "C:\Windows\SYSVOL" `
+        -SysvolPath $using:SysVolPath `
         -Force:$true
 }
 write-host ($configure | Format-Table | Out-String)
