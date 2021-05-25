@@ -1,3 +1,31 @@
+#### TO ENABLE WINRM
+# Set TrustedHosts on client host with Admin privs
+set-item WSMan:\localhost\client\trustedhosts -Value *
+get-item WSMan:\localhost\client\trustedhosts
+# Set Target host to allow PSRemoting
+Enable-PSRemoting -Force -SkipNetworkProfileCheck
+# Allow WINRM through host firewall rule "WINRM-HTTP-In-TCP-PUBLIC" on Target host
+# default is LocalSubnet for the RemoteAddress
+Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
+# Allow ICMP to Target host from anywhere
+New-NetFirewallRule -DisplayName "Allow Any inbound ICMPv4" -Direction Inbound -Protocol ICMPv4 -IcmpType 8 -RemoteAddress Any -Action Allow
+
+
+#------------------------------------------------------
+$IPType = "IPv4"
+$adapter = Get-NetAdapter | ? {$_.Status -eq "up"}
+$interface = $adapter | Get-NetIPInterface -AddressFamily $IPType
+If ($interface.Dhcp -eq "Enabled") {
+
+
+New-NetFirewallRule -DisplayName "Allow inbound ICMPv4" -Direction Inbound -Protocol ICMPv4 -IcmpType 8 -RemoteAddress <localsubnet> -Action Allow
+New-NetFirewallRule -DisplayName "Allow inbound ICMPv6" -Direction Inbound -Protocol ICMPv6 -IcmpType 8 -RemoteAddress 10.16.48.0/22 -Action Allow
+Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
+get-netfirewallrule -enabled true -direction inbound | more
+#------------------------------------------------------
+
+
+
 $Features = @{}
 $Features += @{ $RA = 'Not Installed' }
 write-host -ForegroundColor Red ($Features | Format-Table | Out-String)
@@ -17,22 +45,6 @@ get-WindowsFeature | ?{$_.InstallState -match 'Installed'}
 #    import-module ServerManager
 #    Install-WindowsFeature -Name <feature_name> -computerName <computer_name> -Restart
 write-host "Opening session to remote host $computername"
-
-
-$IPType = "IPv4"
-$adapter = Get-NetAdapter | ? {$_.Status -eq "up"}
-$interface = $adapter | Get-NetIPInterface -AddressFamily $IPType
-If ($interface.Dhcp -eq "Enabled") {
-
-
-New-NetFirewallRule -DisplayName "Allow inbound ICMPv4" -Direction Inbound -Protocol ICMPv4 -IcmpType 8 -RemoteAddress <localsubnet> -Action Allow
-
-New-NetFirewallRule -DisplayName "Allow inbound ICMPv6" -Direction Inbound -Protocol ICMPv6 -IcmpType 8 -RemoteAddress 10.16.48.0/22 -Action Allow
-
-Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
-
-get-netfirewallrule -enabled true -direction inbound | more
-
 
 
 
