@@ -7,14 +7,14 @@
 #       It will be necessary to run a local PS command to relax the firewall rule a little: Set-NetFirewallRule -Name WINRM-HTTP-In-TCP-PUBLIC -RemoteAddress Any
 
 # Fixed variables
-$RolesAndFeatures = @('DNS','DHCP','AD-Domain-Services')
+$RolesAndFeatures = 'DNS', 'DHCP', 'AD-Domain-Services'
 
 # Get variables from file
 # install-conf.txt file format:
 #   computername = <ip address>
-$var = get-content .\install-conf.txt | Out-String | ConvertFrom-StringData
-$computername = $var.computername
-
+#$var = get-content .\install-conf.txt | Out-String | ConvertFrom-StringData
+#$computername = $var.computername
+$computername = Read-Host "Target host IP address: "
 # User input variables
 $credential = Get-Credential
 
@@ -23,10 +23,11 @@ $rs = New-PSSession -ComputerName $computername -Credential $credential
 
 # Check that a static IP address has been configured before installing DHCP Server
 #
-$interface = Invoke-Command -Session $rs -ScriptBlock { (Get-NetAdapter | Where-Object {$_.Status -eq "up"}) | Get-NetIPInterface -AddressFamily IPv4 }
+$interface = Invoke-Command -Session $rs -ScriptBlock { (Get-NetAdapter | Where-Object { $_.Status -eq "up" }) | Get-NetIPInterface -AddressFamily IPv4 }
 If ($interface.Dhcp -eq "Enabled") {
     write-host "`nDHCP is enabled on this system. This should be static before installing DHCP: "
     Write-Host ($interface | Format-Table | Out-String)
+    $RolesAndFeatures = 'DNS', 'AD-Domain-Services'
     exit
 }
 
@@ -45,7 +46,7 @@ foreach ( $feature in $RolesAndFeatures ) {
 
 # reboot host
 #
-# Restart-Computer -ComputerName $computername -Credential $credential -Force
+Restart-Computer -ComputerName $computername -Credential $credential -Force
 
 # Close PSSession - is this needed??
-Remove-PSSession $rs
+#Remove-PSSession $rs
